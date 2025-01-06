@@ -4,12 +4,17 @@ packer {
             version = "~> 1"
             source  = "github.com/hashicorp/qemu"
         }
+        vagrant = {
+            version = ">= 1.1.1"
+            source = "github.com/hashicorp/vagrant"
+        }
     }
 }
 
 locals {
-    hostname = "ubuntu-server"
-    username = "james"
+    hostname         = "ubuntu-server"
+    username         = "james"
+    output_directory = "builds"
 }
 
 variable "password" {
@@ -20,9 +25,9 @@ variable "password" {
 
 source "qemu" "ubuntu" {
     vm_name          = "${local.hostname}.qcow2"
-    output_directory = "builds"
-    cpus             = 2
-    memory           = 4096
+    output_directory = "${local.output_directory}"
+    cpus             = 4
+    memory           = 8192
     accelerator      = "kvm"
     disk_size        = "30G"
     disk_compression = true
@@ -63,5 +68,9 @@ build {
         inline = [
             "echo ${var.password} | sudo -S sh -c 'echo \"${local.username}  ALL = (ALL) NOPASSWD: ALL\" > /etc/sudoers.d/${local.username}'"
         ]
+    }
+    post-processor "vagrant" {
+        output              = "${local.output_directory}/${local.hostname}.box"
+        keep_input_artifact = true
     }
 }

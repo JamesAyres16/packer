@@ -36,7 +36,7 @@ source "qemu" "ubuntu" {
         "/user-data" = templatefile("templates/user-data.pkrtpl.hcl", {
             hostname           = local.hostname
             username           = local.username
-            encrypted_password = sha512(var.password)
+            encrypted_password = bcrypt(var.password)
             ssh_key            = file("~/.ssh/id_rsa.pub")
         })
     }

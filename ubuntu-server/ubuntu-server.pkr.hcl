@@ -1,3 +1,8 @@
+# TODO: cloud-init needs to re-run after VM is recreated
+#       to fix network settings. Will probibly have to do
+#       more reading.
+# TODO: Maybe change how I handle keys...
+
 packer {
     required_plugins {
         qemu = {

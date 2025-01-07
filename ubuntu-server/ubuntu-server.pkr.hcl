@@ -1,6 +1,3 @@
-# TODO: cloud-init needs to re-run after VM is recreated
-#       to fix network settings. Will probibly have to do
-#       more reading.
 # TODO: Maybe change how I handle keys...
 
 packer {
@@ -24,7 +21,7 @@ locals {
 
 variable "password" {
     type        = string
-    description = "Default admin password"
+    description = "default admin password"
     sensitive   = true
 }
 
@@ -72,7 +69,8 @@ build {
     provisioner "shell" {
         inline = [
             "echo ${var.password} | sudo -S sh -c 'echo \"${local.username}  ALL = (ALL) NOPASSWD: ALL\" > /etc/sudoers.d/${local.username}'",
-            "sudo cloud-init clean"
+            "sudo cloud-init clean --logs --seed --machine-id",
+            "sudo rm /etc/netplan/50-cloud-init.yaml"
         ]
     }
     post-processor "vagrant" {

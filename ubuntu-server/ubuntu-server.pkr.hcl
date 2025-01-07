@@ -71,7 +71,8 @@ build {
     sources = [ "source.qemu.ubuntu" ]
     provisioner "shell" {
         inline = [
-            "echo ${var.password} | sudo -S sh -c 'echo \"${local.username}  ALL = (ALL) NOPASSWD: ALL\" > /etc/sudoers.d/${local.username}'"
+            "echo ${var.password} | sudo -S sh -c 'echo \"${local.username}  ALL = (ALL) NOPASSWD: ALL\" > /etc/sudoers.d/${local.username}'",
+            "sudo cloud-init clean"
         ]
     }
     post-processor "vagrant" {

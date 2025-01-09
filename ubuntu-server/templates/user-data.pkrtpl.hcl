@@ -15,3 +15,10 @@ autoinstall:
     allow-pw: true
     authorized-keys:
       - ${ssh_key}
+
+  user-data:
+    users:
+      - name: ${username}
+        sudo: ALL=(ALL) NOPASSWD:ALL
+
+  updates: all

@@ -1,4 +1,3 @@
-# TODO: Maybe change how I handle keys...
 
 packer {
     required_plugins {
@@ -8,25 +7,32 @@ packer {
         }
         vagrant = {
             version = ">= 1.1.1"
-            source = "github.com/hashicorp/vagrant"
+            source  = "github.com/hashicorp/vagrant"
         }
     }
 }
 
-locals {
-    hostname         = "ubuntu-server"
-    username         = "james"
-    output_directory = "builds"
+variable "username" {
+    type = string
 }
 
 variable "password" {
-    type        = string
-    description = "default admin password"
-    sensitive   = true
+    type      = string
+    sensitive = true
+}
+
+variable "hostname" {
+    type    = string
+    default = "ubuntu-server"
+}
+
+
+locals {
+    output_directory = "builds"
 }
 
 source "qemu" "ubuntu" {
-    vm_name          = "${local.hostname}.qcow2"
+    vm_name          = "${var.hostname}.qcow2"
     output_directory = "${local.output_directory}"
     cpus             = 4
     memory           = 8192
@@ -38,17 +44,16 @@ source "qemu" "ubuntu" {
     iso_url      = "https://releases.ubuntu.com/24.04/ubuntu-24.04.1-live-server-amd64.iso"
     iso_checksum = "e240e4b801f7bb68c20d1356b60968ad0c33a41d00d828e74ceb3364a0317be9"
 
-    http_content   = {
+    http_content = {
         "/meta-data" = file("files/meta-data"),
         "/user-data" = templatefile("templates/user-data.pkrtpl.hcl", {
-            hostname           = local.hostname
-            username           = local.username
+            hostname           = var.hostname
+            username           = var.username
             encrypted_password = bcrypt(var.password)
-            ssh_key            = file("~/.ssh/id_rsa.pub")
+            ssh_key            = file("files/id_rsa.pub")
         })
     }
 
-    boot_wait    = "2s"
     boot_command = [
         "<spacebar><wait><spacebar><wait><spacebar><wait><spacebar><wait><spacebar><wait>",
         "e<wait>",
@@ -57,24 +62,17 @@ source "qemu" "ubuntu" {
         "<f10>"
     ]
 
-    ssh_username = local.username
-    ssh_password = var.password
-    ssh_timeout  = "30m"
-    shutdown_command = "echo ${var.password} | sudo -S shutdown -P now"
+    ssh_username     = var.username
+    ssh_password     = var.password
+    ssh_timeout      = "30m"
+    shutdown_command = "sudo cloud-init clean --logs --machine-id --seed && sudo shutdown now"
 }
 
 build {
-    name    = "iso"
     sources = [ "source.qemu.ubuntu" ]
-    provisioner "shell" {
-        inline = [
-            "echo ${var.password} | sudo -S sh -c 'echo \"${local.username}  ALL = (ALL) NOPASSWD: ALL\" > /etc/sudoers.d/${local.username}'",
-            "sudo cloud-init clean --logs --seed --machine-id",
-            "sudo rm /etc/netplan/50-cloud-init.yaml"
-        ]
-    }
+
     post-processor "vagrant" {
-        output              = "${local.output_directory}/${local.hostname}.box"
+        output              = "${local.output_directory}/${var.hostname}.box"
         keep_input_artifact = true
     }
 }
